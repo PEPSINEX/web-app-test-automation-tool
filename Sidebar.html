@@ -12,9 +12,9 @@
   function button1_clicked(data) {
     const blob = new Blob([data], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     document.body.appendChild(a);
-    a.download = 'test.txt';
+    a.download = 'test_case.side';
     a.href = url;
     a.click();
     a.remove();
@@ -22,4 +22,4 @@
   }
 </script>
 
-<p><button id="button1">Download</button>
+<p><button id='button1'>Download</button>

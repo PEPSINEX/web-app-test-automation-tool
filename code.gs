@@ -1,9 +1,29 @@
-let hash = {
-  key1: 'value1',
-}
+let domain = 'https://sfc.jp'
+let commandsValue = [{
+  command: 'open',
+  target: '/ie/contact/inquiry/home/form.php'
+}, {
+  command: 'close'
+}]
+const suitesValue = [{
+  name: '',
+  persistSession: false,
+  'parallel': false,
+  'timeout': 300,
+  'tests': []
+}]
 
-function convertJsonFromHash(hash) {
-  return JSON.stringify(hash)
+let testCase = {
+  version: '2.0',
+  name: 'form_test',
+  url: domain,
+  tests: [{
+    name: 'main',
+    commands: commandsValue
+  }],
+  suites: suitesValue,
+  'urls': [],
+  'plugins': []
 }
 
 function onOpen() {
@@ -21,5 +41,5 @@ function showSidebar() {
 }
 
 function getData() {
-  return convertJsonFromHash(hash)
+  return JSON.stringify(testCase)
 }
