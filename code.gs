@@ -19,6 +19,18 @@ let testCase = {
   plugins: []
 }
 
+function setInputDataToTestCaseSheet(inputData) {
+  let ss = inputData.testCaseSheet
+
+  const urlRange = 'B1'
+  const directoryRange = 'B3'
+  const mailRange = 'C4'
+
+  ss.getRange(urlRange).setValue(inputData.url)
+  ss.getRange(directoryRange).setValue(inputData.directory)
+  ss.getRange(mailRange).setValue(inputData.mail)
+}
+
 //  入力情報をhash形式にて返却する
 function getInputData() {
   let inputData = {}
@@ -27,14 +39,16 @@ function getInputData() {
   const urlCol = 3
   const mailCol = 4
   const verifyCol = 5  
-
   let row = getTargetRow()
 
   let testCaseSheetName = inputSheet.getRange(row, siteNameCol).getValue()
+
   inputData.testCaseSheet = SpreadsheetApp.getActive().getSheetByName(testCaseSheetName)
-  inputData.url = inputSheet.getRange(row, urlCol).getValue()
-  inputData.mail = inputSheet.getRange(row, mailCol).getValue()
-  inputData.verify = inputSheet.getRange(row, verifyCol).getValue()
+  inputData.url           = inputSheet.getRange(row, urlCol).getValue()
+  inputData.mail          = inputSheet.getRange(row, mailCol).getValue()
+  inputData.verify        = inputSheet.getRange(row, verifyCol).getValue()
+  inputData.domain        = splitUrl(inputData.url).domain
+  inputData.directory     = splitUrl(inputData.url).directory
 
   return inputData
 }
@@ -59,38 +73,45 @@ function getTargetRow() {
   return targetRow
 }
 
-function getDomain() {
-  let url = sheet.getRange(2,2).getValue()
-  
+// URLを分割してハッシュで返す。キーは「URL」「ドメイン」「ディレクトリ」の3つ
+function splitUrl(url) {
+  let urlArr = {}
+
+  let domain
   let regexpValue = 'https:\/\/([\\s\\S]*?)\/' 
   let regexp = new RegExp(regexpValue)
-  let result = url.match(regexp)[0]
+  domain = url.match(regexp)[0].slice(0, -1)
 
-  return result.slice(0, -1)
+  let directory
+  directory = url.replace(domain, '')
+
+  urlArr = {
+    url: url,
+    domain: domain,
+    directory: directory
+  }
+
+  return urlArr
 }
 
-function setUrlToSheet() {
-  let url = sheet.getRange(2,2).getValue()
-  let domain = getDomain()
-
-  let pass = url.replace(domain, '')
-  sheet.getRange(4,2).setValue(pass)
-}
-
-function getCommandList() {
+function getCommandList(ss) {
   let commandList = []
 
-  let firstRow = 4
-  let lastRow = sheet.getRange(4, 1).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
+  const commandCol = 1
+  const targetCol = 2
+  const valueCol = 3
+  const commandRange = 3
+  const firstRow = 3
+  let lastRow = ss.getRange(firstRow, commandCol).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
   let rowRange = lastRow - firstRow + 1
-  let values = sheet.getRange(4, 1, rowRange, 3).getValues()
+  let values = ss.getRange(firstRow, commandCol, rowRange, commandRange).getValues()
   
   for(let i=0;i<values.length;i++) {
     let tmp = {}
 
-    tmp.command = values[i][0]
-    tmp.target = values[i][1]
-    tmp.value = values[i][2]
+    tmp.command = values[i][commandCol-1]
+    tmp.target = values[i][targetCol-1]
+    tmp.value = values[i][valueCol-1]
 
     commandList.push(tmp)
   }
@@ -112,9 +133,13 @@ function showSidebar() {
 }
 
 function getData() {
-  testCase.url = getDomain()
-  setUrlToSheet()
-  testCase.tests[0].commands = getCommandList()
+  let inputData = getInputData()
+  setInputDataToTestCaseSheet(inputData)
+
+  testCase.url = inputData.domain
+  testCase.tests[0].commands = getCommandList(inputData.testCaseSheet)
+
+  Logger.log(testCase)
 
   return JSON.stringify(testCase)
 }
