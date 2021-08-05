@@ -1,0 +1,25 @@
+<script>
+  window.addEventListener('load', () => {
+    const button1 = document.getElementById('button1');
+    button1.addEventListener('click', preventEvent, false);
+  });
+
+  function preventEvent(evt) {
+    evt.preventDefault()
+    google.script.run.withSuccessHandler(button1_clicked).getData()
+  }
+
+  function button1_clicked(data) {
+    const blob = new Blob([data], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.download = 'test_case.side';
+    a.href = url;
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
+
+<p><button id='button1'>Download</button>
