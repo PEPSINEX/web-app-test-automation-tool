@@ -1,4 +1,5 @@
 const sheet = SpreadsheetApp.getActive().getSheetByName('testData')
+let dataRow
 
 let testCase = {
   version: '2.0',
@@ -17,6 +18,24 @@ let testCase = {
   }],
   urls: [],
   plugins: []
+}
+
+function getDataRow() {
+  let inputSheet = SpreadsheetApp.getActive().getSheetByName('テストケース入力欄')
+  let col = 7
+  let firstRow = 2
+  let lastRow = inputSheet.getRange(firstRow, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
+
+  for(let i=firstRow;i<=lastRow;i++) {
+    let isConfirmed = inputSheet.getRange(i, col).getValue()
+
+    if(!isConfirmed) {
+      dataRow = i
+      break
+    }
+  }
+  
+  return dataRow
 }
 
 function getDomain() {
