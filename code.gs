@@ -1,5 +1,13 @@
+/**
+ * 入力欄のスプレッドシート
+ * @type {Object}
+ */
 const inputSheet = SpreadsheetApp.getActive().getSheetByName('入力欄')
 
+/**
+ * Selenium IDE用のテストファイル情報。ハッシュ形式
+ * @type {Object}
+ */
 let testCase = {
   version: '2.0',
   name: 'form_test',
@@ -19,6 +27,10 @@ let testCase = {
   plugins: []
 }
 
+/**
+ * 「入力欄」の必要情報を、テストケースシートの該当箇所に記述
+ * @param {Object} inputData
+ */
 function setInputDataToTestCaseSheet(inputData) {
   let ss = inputData.testCaseSheet
 
@@ -31,7 +43,10 @@ function setInputDataToTestCaseSheet(inputData) {
   ss.getRange(mailRange).setValue(inputData.mail)
 }
 
-//  入力情報をhash形式にて返却する
+/**
+ * 「入力欄」の必要情報をhash形式にて返却
+ * @return {Object} inputData
+ */
 function getInputData() {
   let inputData = {}
 
@@ -53,7 +68,11 @@ function getInputData() {
   return inputData
 }
 
-// inputSheetの「完了チェック」列がfalseである一番上の列を取得
+/**
+ * 「入力欄」のテスト該当列を返却
+ * 「完了チェック」列がfalseである一番上の列を該当列とする
+ * @return {Number} 
+ */
 function getTargetRow() {
   let targetRow
 
@@ -73,7 +92,11 @@ function getTargetRow() {
   return targetRow
 }
 
-// URLを分割してハッシュで返す。キーは「URL」「ドメイン」「ディレクトリ」の3つ
+/**
+ * URLを分割して返却
+ * 「URL」「ドメイン」「ディレクトリ」がキー
+ * @return {Object} 
+ */
 function splitUrl(url) {
   let urlArr = {}
 
@@ -94,6 +117,12 @@ function splitUrl(url) {
   return urlArr
 }
 
+/**
+ * テストケースを返却
+ * 「testCase.tests[0].commands」に代入する値
+ * @param {Object} SpreadSheet
+ * @return {Object} 
+ */
 function getCommandList(ss) {
   let commandList = []
 
@@ -118,13 +147,19 @@ function getCommandList(ss) {
   return commandList
 }
 
+/**
+ * スプレッドシートを開いた時の動作を定義
+ */
 function onOpen() {
-  SpreadsheetApp.getUi()
-      .createMenu('スクリプト')
-      .addItem('サイドバー表示', 'showSidebar')
+  SpreadsheetApp.getUi()            
+      .createMenu('スクリプト')            
+      .addItem('サイドバー表示', 'showSidebar')            
       .addToUi();
 }
 
+/**
+ * HTML形式のサイドバーを表示
+ */
 function showSidebar() {
   var html = HtmlService
               .createHtmlOutputFromFile('Sidebar')
@@ -132,14 +167,17 @@ function showSidebar() {
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
+/**
+ * Selenium IDE用のテストファイルを出力
+ * サイドバーにてダウンロードボタンを押下した際に実行される関数
+ * @return {Object}
+ */
 function getData() {
   let inputData = getInputData()
   setInputDataToTestCaseSheet(inputData)
 
   testCase.url = inputData.domain
   testCase.tests[0].commands = getCommandList(inputData.testCaseSheet)
-
-  Logger.log(testCase)
 
   return JSON.stringify(testCase)
 }
