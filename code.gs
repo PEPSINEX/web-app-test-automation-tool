@@ -19,17 +19,28 @@ let testCase = {
   plugins: []
 }
 
-function getTestCaseSheet() {
-  const col = 2
-  let row = getTargetRowInInputSheet()
+//  入力情報をhash形式にて返却する
+function getInputData() {
+  let inputData = {}
 
-  let testCaseSheetName = inputSheet.getRange(row, col).getValue()
-  let ss = SpreadsheetApp.getActive().getSheetByName(testCaseSheetName)
+  const siteNameCol = 2
+  const urlCol = 3
+  const mailCol = 4
+  const verifyCol = 5  
 
-  return ss
+  let row = getTargetRow()
+
+  let testCaseSheetName = inputSheet.getRange(row, siteNameCol).getValue()
+  inputData.testCaseSheet = SpreadsheetApp.getActive().getSheetByName(testCaseSheetName)
+  inputData.url = inputSheet.getRange(row, urlCol).getValue()
+  inputData.mail = inputSheet.getRange(row, mailCol).getValue()
+  inputData.verify = inputSheet.getRange(row, verifyCol).getValue()
+
+  return inputData
 }
 
-function getTargetRowInInputSheet() {
+// inputSheetの「完了チェック」列がfalseである一番上の列を取得
+function getTargetRow() {
   let targetRow
 
   const col = 7
