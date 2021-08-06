@@ -6,6 +6,22 @@ const inputSheet = SpreadsheetApp.getActive().getSheetByName('入力欄')
 const verifyMasterSheet = SpreadsheetApp.getActive().getSheetByName('検証内容マスタ')
 
 /**
+ * testCaseシートのセル情報
+ * @type {Object} array
+ */
+const testCaseRange = {
+  url: 'B1',
+  directory: 'B3',
+  mail: 'C4',
+  command: {
+    row: 3,
+    col: 1,
+    rowRange: 1,
+    colRange: 3
+  }
+}
+
+/**
  * Selenium IDE用のテストファイル情報。ハッシュ形式
  * @type {Object}
  */
@@ -36,22 +52,50 @@ function setInputDataToTestCaseSheet(inputData) {
   let ss = inputData.testCaseSheet
 
   // URL, directory, メールアドレスを反映
-  const urlRange = 'B1'
-  const directoryRange = 'B3'
-  const mailRange = 'C4'
-  ss.getRange(urlRange).setValue(inputData.url)
-  ss.getRange(directoryRange).setValue(inputData.directory)
-  ss.getRange(mailRange).setValue(inputData.mail)
+  ss.getRange(testCaseRange.url).setValue(inputData.url)
+  ss.getRange(testCaseRange.directory).setValue(inputData.directory)
+  ss.getRange(testCaseRange.mail).setValue(inputData.mail)
 
   // 検証内容を反映
-  const commandFirstRow = 3
   let command = getVerifyCommand(inputData.verify)
   
-  const commandCol = 1
-  let commandRow = getLastRow(ss, commandFirstRow, commandCol) + 1
-  const commandColRange = 3
-  const commandRowRange = 1
-  ss.getRange(commandRow, commandCol, commandRowRange, commandColRange).setValues(command)
+  let row = testCaseRange.command.row
+  let col = testCaseRange.command.col
+  let rowRange = testCaseRange.command.rowRange
+  let colRange = testCaseRange.command.colRange
+
+  let targetRow = getLastRow(ss, row, col) + 1
+  ss.getRange(targetRow, col, rowRange, colRange).setValues(command)
+}
+
+/**
+ * テストケースシートに反映した入力情報を削除
+ */
+function deleteInputDataOfTestCaseSheet() {
+  let ss = getInputData().testCaseSheet
+
+  // URL, directory, メールアドレスを削除
+  ss.getRange(testCaseRange.url).clearContent()
+  ss.getRange(testCaseRange.directory).clearContent()
+  ss.getRange(testCaseRange.mail).clearContent()
+
+  // 検証内容を削除
+  let row = testCaseRange.command.row
+  let col = testCaseRange.command.col
+  let rowRange = getLastRow(ss, row, col) - row + 1
+  let colRange = 1
+
+  let commandList = ss.getRange(row, col, rowRange, colRange).getValues().flat()
+  let targetRow
+  for(let i=0;i<commandList.length;i++) {
+    let isMatch = commandList[i].match(/assert/)
+    if( isMatch ) { 
+      targetRow = i + row
+      break
+    }
+  }
+
+  ss.getRange(targetRow, col, testCaseRange.command.rowRange, testCaseRange.command.colRange).clearContent()
 }
 
 /**
