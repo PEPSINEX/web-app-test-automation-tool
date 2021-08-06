@@ -1,8 +1,9 @@
 /**
- * 入力欄のスプレッドシート
+ * 入力欄と検証内容マスタのスプレッドシート
  * @type {Object}
  */
 const inputSheet = SpreadsheetApp.getActive().getSheetByName('入力欄')
+const verifyMasterSheet = SpreadsheetApp.getActive().getSheetByName('検証内容マスタ')
 
 /**
  * Selenium IDE用のテストファイル情報。ハッシュ形式
@@ -43,14 +44,34 @@ function setInputDataToTestCaseSheet(inputData) {
   ss.getRange(mailRange).setValue(inputData.mail)
 
   // 検証内容を反映
-  // let targetRow = getLastRow(inputData.testCaseSheet) + 1
+  const commandCol = 1
+  const commandFirstRow = 3
+  let verifyCommandRow = getLastRow(inputData.testCaseSheet, commandFirstRow, commandCol) + 1
 }
 
-function test() {
+function getVerifyCommand() {
+  let command = []
   let inputData = getInputData()
-  let targetRow = getLastRow(inputData.testCaseSheet, 3, 1) + 1
 
-  Logger.log(targetRow)
+  // 入力欄と一致するマスターの行を取得
+  const verifyCol = 2
+  const firstRow = 2
+  let rowRange = getLastRow(verifyMasterSheet, firstRow, verifyCol) - 1
+
+  let verifyKeyList = verifyMasterSheet.getRange(firstRow, verifyCol, rowRange).getValues().flat()
+  let index = verifyKeyList.indexOf(inputData.verify)
+  let targetRow = index + firstRow
+
+  // マスターの行のコマンドを取得
+  const commandCol = 3
+  const commandColRange = 3
+  const commandRow = targetRow
+  const commandRowRange = 1
+  
+  command = verifyMasterSheet.getRange(commandRow, commandCol, commandRowRange, commandColRange).getValues()
+
+  Logger.log(command)
+  return command
 }
 
 /**
