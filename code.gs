@@ -48,7 +48,7 @@ function setInputDataToTestCaseSheet(inputData) {
   let command = getVerifyCommand(inputData.verify)
   
   const commandCol = 1
-  let commandRow = getLastRow(inputData.testCaseSheet, commandFirstRow, commandCol) + 1
+  let commandRow = getLastRow(ss, commandFirstRow, commandCol) + 1
   const commandColRange = 3
   const commandRowRange = 1
   ss.getRange(commandRow, commandCol, commandRowRange, commandColRange).setValues(command)
