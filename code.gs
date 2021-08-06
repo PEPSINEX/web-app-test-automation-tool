@@ -44,14 +44,22 @@ function setInputDataToTestCaseSheet(inputData) {
   ss.getRange(mailRange).setValue(inputData.mail)
 
   // 検証内容を反映
-  const commandCol = 1
   const commandFirstRow = 3
-  let verifyCommandRow = getLastRow(inputData.testCaseSheet, commandFirstRow, commandCol) + 1
+  let command = getVerifyCommand(inputData.verify)
+  
+  const commandCol = 1
+  let commandRow = getLastRow(inputData.testCaseSheet, commandFirstRow, commandCol) + 1
+  const commandColRange = 3
+  const commandRowRange = 1
+  ss.getRange(commandRow, commandCol, commandRowRange, commandColRange).setValues(command)
 }
 
-function getVerifyCommand() {
+/**
+ * 「入力欄」の必要情報を、テストケースシートの該当箇所に記述
+ * @param {Object} inputData
+ */
+function getVerifyCommand(targetVerify) {
   let command = []
-  let inputData = getInputData()
 
   // 入力欄と一致するマスターの行を取得
   const verifyCol = 2
@@ -59,7 +67,7 @@ function getVerifyCommand() {
   let rowRange = getLastRow(verifyMasterSheet, firstRow, verifyCol) - 1
 
   let verifyKeyList = verifyMasterSheet.getRange(firstRow, verifyCol, rowRange).getValues().flat()
-  let index = verifyKeyList.indexOf(inputData.verify)
+  let index = verifyKeyList.indexOf(targetVerify)
   let targetRow = index + firstRow
 
   // マスターの行のコマンドを取得
@@ -67,10 +75,9 @@ function getVerifyCommand() {
   const commandColRange = 3
   const commandRow = targetRow
   const commandRowRange = 1
-  
+
   command = verifyMasterSheet.getRange(commandRow, commandCol, commandRowRange, commandColRange).getValues()
 
-  Logger.log(command)
   return command
 }
 

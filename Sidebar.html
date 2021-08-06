@@ -19,6 +19,8 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+
+    google.script.run.withSuccessHandler(button1_clicked).getData()
   }
 </script>
 
