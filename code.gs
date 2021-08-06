@@ -34,13 +34,32 @@ let testCase = {
 function setInputDataToTestCaseSheet(inputData) {
   let ss = inputData.testCaseSheet
 
+  // URL, directory, メールアドレスを反映
   const urlRange = 'B1'
   const directoryRange = 'B3'
   const mailRange = 'C4'
-
   ss.getRange(urlRange).setValue(inputData.url)
   ss.getRange(directoryRange).setValue(inputData.directory)
   ss.getRange(mailRange).setValue(inputData.mail)
+
+  // 検証内容を反映
+  let targetRow = getLastCommandRow(inputData.testCaseSheet) + 1
+
+}
+
+/**
+ * 該当セルを基点とし、連続する一番下のデータのあるセルの行数を返却
+ * @param {Object} SpreadSheet 対象シート
+ * @return {Number} セルの行数
+ */
+function getLastCommandRow(targetSheet) {
+  let lastRow
+
+  const col = 1
+  const firstRow = 3
+  lastRow = targetSheet.getRange(firstRow, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
+
+  return lastRow
 }
 
 /**
