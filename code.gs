@@ -43,22 +43,26 @@ function setInputDataToTestCaseSheet(inputData) {
   ss.getRange(mailRange).setValue(inputData.mail)
 
   // 検証内容を反映
-  let targetRow = getLastCommandRow(inputData.testCaseSheet) + 1
+  // let targetRow = getLastRow(inputData.testCaseSheet) + 1
+}
 
+function test() {
+  let inputData = getInputData()
+  let targetRow = getLastRow(inputData.testCaseSheet, 3, 1) + 1
+
+  Logger.log(targetRow)
 }
 
 /**
- * 該当セルを基点とし、連続する一番下のデータのあるセルの行数を返却
- * @param {Object} SpreadSheet 対象シート
+ * 特定セルを基点とし、連続する一番下のデータのあるセルの行数を返却
+ * @param {Object} ss 対象シート
+ * @param {Number} col 特定セルの列数
+ * @param {Number} row 特定セルの行数
  * @return {Number} セルの行数
  */
-function getLastCommandRow(targetSheet) {
+function getLastRow(ss, row, col) {
   let lastRow
-
-  const col = 1
-  const firstRow = 3
-  lastRow = targetSheet.getRange(firstRow, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
-
+  lastRow = ss.getRange(row, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
   return lastRow
 }
 
