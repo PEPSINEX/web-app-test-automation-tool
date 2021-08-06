@@ -1,8 +1,25 @@
 /**
- * 入力欄のスプレッドシート
+ * 入力欄と検証内容マスタのスプレッドシート
  * @type {Object}
  */
 const inputSheet = SpreadsheetApp.getActive().getSheetByName('入力欄')
+const verifyMasterSheet = SpreadsheetApp.getActive().getSheetByName('検証内容マスタ')
+
+/**
+ * testCaseシートのセル情報
+ * @type {Object} array
+ */
+const testCaseRange = {
+  url: 'B1',
+  directory: 'B3',
+  mail: 'C4',
+  command: {
+    row: 3,
+    col: 1,
+    rowRange: 1,
+    colRange: 3
+  }
+}
 
 /**
  * Selenium IDE用のテストファイル情報。ハッシュ形式
@@ -34,13 +51,91 @@ let testCase = {
 function setInputDataToTestCaseSheet(inputData) {
   let ss = inputData.testCaseSheet
 
-  const urlRange = 'B1'
-  const directoryRange = 'B3'
-  const mailRange = 'C4'
+  // URL, directory, メールアドレスを反映
+  ss.getRange(testCaseRange.url).setValue(inputData.url)
+  ss.getRange(testCaseRange.directory).setValue(inputData.directory)
+  ss.getRange(testCaseRange.mail).setValue(inputData.mail)
 
-  ss.getRange(urlRange).setValue(inputData.url)
-  ss.getRange(directoryRange).setValue(inputData.directory)
-  ss.getRange(mailRange).setValue(inputData.mail)
+  // 検証内容を反映
+  let command = getVerifyCommand(inputData.verify)
+  
+  let row = testCaseRange.command.row
+  let col = testCaseRange.command.col
+  let rowRange = testCaseRange.command.rowRange
+  let colRange = testCaseRange.command.colRange
+
+  let targetRow = getLastRow(ss, row, col) + 1
+  ss.getRange(targetRow, col, rowRange, colRange).setValues(command)
+}
+
+/**
+ * テストケースシートに反映した入力情報を削除
+ */
+function deleteInputDataOfTestCaseSheet() {
+  let ss = getInputData().testCaseSheet
+
+  // URL, directory, メールアドレスを削除
+  ss.getRange(testCaseRange.url).clearContent()
+  ss.getRange(testCaseRange.directory).clearContent()
+  ss.getRange(testCaseRange.mail).clearContent()
+
+  // 検証内容を削除
+  let row = testCaseRange.command.row
+  let col = testCaseRange.command.col
+  let rowRange = getLastRow(ss, row, col) - row + 1
+  let colRange = 1
+
+  let commandList = ss.getRange(row, col, rowRange, colRange).getValues().flat()
+  let targetRow
+  for(let i=0;i<commandList.length;i++) {
+    let isMatch = commandList[i].match(/assert/)
+    if( isMatch ) { 
+      targetRow = i + row
+      break
+    }
+  }
+
+  ss.getRange(targetRow, col, testCaseRange.command.rowRange, testCaseRange.command.colRange).clearContent()
+}
+
+/**
+ * 「入力欄」の必要情報を、テストケースシートの該当箇所に記述
+ * @param {Object} inputData
+ */
+function getVerifyCommand(targetVerify) {
+  let command = []
+
+  // 入力欄と一致するマスターの行を取得
+  const verifyCol = 2
+  const firstRow = 2
+  let rowRange = getLastRow(verifyMasterSheet, firstRow, verifyCol) - 1
+
+  let verifyKeyList = verifyMasterSheet.getRange(firstRow, verifyCol, rowRange).getValues().flat()
+  let index = verifyKeyList.indexOf(targetVerify)
+  let targetRow = index + firstRow
+
+  // マスターの行のコマンドを取得
+  const commandCol = 3
+  const commandColRange = 3
+  const commandRow = targetRow
+  const commandRowRange = 1
+
+  command = verifyMasterSheet.getRange(commandRow, commandCol, commandRowRange, commandColRange).getValues()
+
+  return command
+}
+
+/**
+ * 特定セルを基点とし、連続する一番下のデータのあるセルの行数を返却
+ * @param {Object} ss 対象シート
+ * @param {Number} col 特定セルの列数
+ * @param {Number} row 特定セルの行数
+ * @return {Number} セルの行数
+ */
+function getLastRow(ss, row, col) {
+  let lastRow
+  lastRow = ss.getRange(row, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
+  return lastRow
 }
 
 /**
