@@ -67,6 +67,17 @@ let testCase = {
 }
 
 /**
+ * ダウンロードボタン押下時のエポック時間を、「入出力」シートに記録
+ */
+function setDownLoadTime() {
+  let date = new Date()
+  let unixTime = Math.floor((date.getTime()/1000)).toString()
+
+  let row = getTargetRow()
+  inputSheet.getRange(row, inputSheetRange.col.downloadTime).setValue(unixTime)
+}
+
+/**
  * 「入力欄」の必要情報を、テストケースシートの該当箇所に記述
  * @param {Object} inputData
  */
@@ -277,6 +288,7 @@ function showSidebar() {
 function getData() {
   let inputData = getInputData()
   setInputDataToTestCaseSheet(inputData)
+  setDownLoadTime()
 
   testCase.url = inputData.domain
   testCase.tests[0].commands = getCommandList(inputData.testCaseSheet)
