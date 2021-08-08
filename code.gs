@@ -2,7 +2,7 @@
  * 入力欄と検証内容マスタのスプレッドシート
  * @type {Object}
  */
-const inputSheet = SpreadsheetApp.getActive().getSheetByName('入力欄')
+const inputSheet = SpreadsheetApp.getActive().getSheetByName('入出力')
 const verifyMasterSheet = SpreadsheetApp.getActive().getSheetByName('検証内容マスタ')
 
 /**
@@ -27,7 +27,7 @@ const testCaseRange = {
  */
 let testCase = {
   version: '2.0',
-  name: 'form_test',
+  name: '',
   url: '',
   tests: [{
     name: 'main',
@@ -153,6 +153,7 @@ function getInputData() {
 
   let testCaseSheetName = inputSheet.getRange(row, siteNameCol).getValue()
 
+  inputData.siteName      = inputSheet.getRange(row, siteNameCol).getValue()
   inputData.testCaseSheet = SpreadsheetApp.getActive().getSheetByName(testCaseSheetName)
   inputData.url           = inputSheet.getRange(row, urlCol).getValue()
   inputData.mail          = inputSheet.getRange(row, mailCol).getValue()
@@ -273,6 +274,12 @@ function getData() {
 
   testCase.url = inputData.domain
   testCase.tests[0].commands = getCommandList(inputData.testCaseSheet)
+  testCase.name = inputData.siteName
 
-  return JSON.stringify(testCase)
+  data = {
+    testFile: JSON.stringify(testCase),
+    fileName: inputData.siteName + '.side'
+  }
+
+  return data
 }
