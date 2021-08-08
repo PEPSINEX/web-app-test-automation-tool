@@ -6,18 +6,40 @@ const inputSheet = SpreadsheetApp.getActive().getSheetByName('入出力')
 const verifyMasterSheet = SpreadsheetApp.getActive().getSheetByName('検証内容マスタ')
 
 /**
+ * inputSheetシートのセル情報
+ * @type {Object} hash
+ */
+const inputSheetRange = {
+  col: {
+    siteName: 2,
+    url: 3,
+    mail: 4,
+    verify: 5,
+    isFinished: 7,
+    downloadTime: 8
+  },
+  row: {
+    data: 2
+  }
+}
+
+/**
  * testCaseシートのセル情報
- * @type {Object} array
+ * @type {Object} hash
  */
 const testCaseRange = {
   url: 'B1',
   directory: 'B3',
   mail: 'C4',
-  command: {
-    row: 3,
-    col: 1,
-    rowRange: 1,
-    colRange: 3
+  row: {
+    data: 3,
+    range: 1
+  },
+  col: {
+    command: 1,
+    target: 2,
+    value: 3,
+    range: 3
   }
 }
 
@@ -58,11 +80,11 @@ function setInputDataToTestCaseSheet(inputData) {
 
   // 検証内容を反映
   let command = getVerifyCommand(inputData.verify)
-  
-  let row = testCaseRange.command.row
-  let col = testCaseRange.command.col
-  let rowRange = testCaseRange.command.rowRange
-  let colRange = testCaseRange.command.colRange
+
+  let row = testCaseRange.row.data
+  let col = testCaseRange.col.command
+  let rowRange = testCaseRange.row.range
+  let colRange = testCaseRange.col.range
 
   let targetRow = getLastRow(ss, row, col) + 1
   ss.getRange(targetRow, col, rowRange, colRange).setValues(command)
@@ -80,8 +102,8 @@ function deleteInputDataOfTestCaseSheet() {
   ss.getRange(testCaseRange.mail).clearContent()
 
   // 検証内容を削除
-  let row = testCaseRange.command.row
-  let col = testCaseRange.command.col
+  let row = testCaseRange.row.data
+  let col = testCaseRange.col.command
   let rowRange = getLastRow(ss, row, col) - row + 1
   let colRange = 1
 
@@ -89,13 +111,13 @@ function deleteInputDataOfTestCaseSheet() {
   let targetRow
   for(let i=0;i<commandList.length;i++) {
     let isMatch = commandList[i].match(/assert/)
-    if( isMatch ) { 
+    if( isMatch ) {
       targetRow = i + row
       break
     }
   }
 
-  ss.getRange(targetRow, col, testCaseRange.command.rowRange, testCaseRange.command.colRange).clearContent()
+  ss.getRange(targetRow, col, testCaseRange.row.range, testCaseRange.col.range).clearContent()
 }
 
 /**
@@ -145,19 +167,13 @@ function getLastRow(ss, row, col) {
 function getInputData() {
   let inputData = {}
 
-  const siteNameCol = 2
-  const urlCol = 3
-  const mailCol = 4
-  const verifyCol = 5  
   let row = getTargetRow()
 
-  let testCaseSheetName = inputSheet.getRange(row, siteNameCol).getValue()
-
-  inputData.siteName      = inputSheet.getRange(row, siteNameCol).getValue()
-  inputData.testCaseSheet = SpreadsheetApp.getActive().getSheetByName(testCaseSheetName)
-  inputData.url           = inputSheet.getRange(row, urlCol).getValue()
-  inputData.mail          = inputSheet.getRange(row, mailCol).getValue()
-  inputData.verify        = inputSheet.getRange(row, verifyCol).getValue()
+  inputData.siteName      = inputSheet.getRange(row, inputSheetRange.col.siteName).getValue()
+  inputData.testCaseSheet = SpreadsheetApp.getActive().getSheetByName(inputData.siteName)
+  inputData.url           = inputSheet.getRange(row, inputSheetRange.col.url).getValue()
+  inputData.mail          = inputSheet.getRange(row, inputSheetRange.col.mail).getValue()
+  inputData.verify        = inputSheet.getRange(row, inputSheetRange.col.verify).getValue()
   inputData.domain        = splitUrl(inputData.url).domain
   inputData.directory     = splitUrl(inputData.url).directory
 
@@ -167,37 +183,33 @@ function getInputData() {
 /**
  * 「入力欄」のテスト該当列を返却
  * 「完了チェック」列がfalseである一番上の列を該当列とする
- * @return {Number} 
+ * @return {Number}
  */
 function getTargetRow() {
   let targetRow
 
-  const col = 7
-  const firstRow = 2
-  let lastRow = inputSheet.getRange(firstRow, col).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
-
-  for(let i=firstRow;i<=lastRow;i++) {
-    let isConfirmed = inputSheet.getRange(i, col).getValue()
+  let lastRow = getLastRow(inputSheet, inputSheetRange.row.data, inputSheetRange.col.isFinished)
+  for(let i=inputSheetRange.row.data;i<=lastRow;i++) {
+    let isConfirmed = inputSheet.getRange(i, inputSheetRange.col.isFinished).getValue()
 
     if(!isConfirmed) {
       targetRow = i
       break
     }
   }
-  
   return targetRow
 }
 
 /**
  * URLを分割して返却
  * 「URL」「ドメイン」「ディレクトリ」がキー
- * @return {Object} 
+ * @return {Object}
  */
 function splitUrl(url) {
   let urlArr = {}
 
   let domain
-  let regexpValue = 'https:\/\/([\\s\\S]*?)\/' 
+  let regexpValue = 'https:\/\/([\\s\\S]*?)\/'
   let regexp = new RegExp(regexpValue)
   domain = url.match(regexp)[0].slice(0, -1)
 
@@ -217,26 +229,20 @@ function splitUrl(url) {
  * テストケースを返却
  * 「testCase.tests[0].commands」に代入する値
  * @param {Object} SpreadSheet
- * @return {Object} 
+ * @return {Object}
  */
 function getCommandList(ss) {
   let commandList = []
 
-  const commandCol = 1
-  const targetCol = 2
-  const valueCol = 3
-  const commandRange = 3
-  const firstRow = 3
-  let lastRow = ss.getRange(firstRow, commandCol).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
-  let rowRange = lastRow - firstRow + 1
-  let values = ss.getRange(firstRow, commandCol, rowRange, commandRange).getValues()
-  
+  let rowRange = getLastRow(ss, testCaseRange.row.data, testCaseRange.col.command) - testCaseRange.row.data + 1
+  let values = ss.getRange(testCaseRange.row.data, testCaseRange.col.command, rowRange, testCaseRange.col.range).getValues()
+
   for(let i=0;i<values.length;i++) {
     let tmp = {}
 
-    tmp.command = values[i][commandCol-1]
-    tmp.target = values[i][targetCol-1]
-    tmp.value = values[i][valueCol-1]
+    tmp.command = values[i][testCaseRange.col.command - 1]
+    tmp.target = values[i][testCaseRange.col.target - 1]
+    tmp.value = values[i][testCaseRange.col.value - 1]
 
     commandList.push(tmp)
   }
@@ -247,9 +253,9 @@ function getCommandList(ss) {
  * スプレッドシートを開いた時の動作を定義
  */
 function onOpen() {
-  SpreadsheetApp.getUi()            
-      .createMenu('スクリプト')            
-      .addItem('サイドバー表示', 'showSidebar')            
+  SpreadsheetApp.getUi()
+      .createMenu('スクリプト')
+      .addItem('サイドバー表示', 'showSidebar')
       .addToUi();
 }
 
