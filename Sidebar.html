@@ -1,20 +1,20 @@
 <script>
   window.addEventListener('load', () => {
-    const button1 = document.getElementById('button1');
-    button1.addEventListener('click', preventEvent, false);
+    const download = document.getElementById('download');
+    download.addEventListener('click', preventEvent, false);
   });
 
   function preventEvent(evt) {
     evt.preventDefault()
-    google.script.run.withSuccessHandler(button1_clicked).getData()
+    google.script.run.withSuccessHandler(downloadTestFile).getData()
   }
 
-  function button1_clicked(data) {
-    const blob = new Blob([data], {type: 'text/plain'});
+  function downloadTestFile(data) {
+    const blob = new Blob([data.testFile], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     document.body.appendChild(a);
-    a.download = 'test_case.side';
+    a.download = data.fileName;
     a.href = url;
     a.click();
     a.remove();
@@ -24,4 +24,4 @@
   }
 </script>
 
-<p><button id='button1'>Download</button>
+<p><button id='download'>Download</button>
