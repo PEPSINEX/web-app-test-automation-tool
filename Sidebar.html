@@ -2,6 +2,9 @@
   window.addEventListener('load', () => {
     const download = document.getElementById('download');
     download.addEventListener('click', preventEvent, false);
+
+    const getAdminMailButton = document.getElementById('get_admin_mail');
+    getAdminMailButton.addEventListener('click', getAdminMail, false);
   });
 
   function preventEvent(evt) {
@@ -22,6 +25,11 @@
 
     google.script.run.deleteInputDataOfTestCaseSheet();
   }
+
+  function getAdminMail() {
+    google.script.run.setAdminMailSender();
+  }
 </script>
 
-<p><button id='download'>Download</button>
+<p><button id='download'>Download</button></p>
+<p><button id='get_admin_mail'>管理者宛メール送信先取得</button></p>
